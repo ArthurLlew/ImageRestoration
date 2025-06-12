@@ -1,0 +1,13 @@
+# Image Folders
+/Results_(Mag)
+/Results_(PGS)
+/Results_(VKR)
+/Samples
+
+# Python cache
+*__pycache__
+
+# File extensions
+*.lib
+*.dll
+*.exp

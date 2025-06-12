@@ -1,0 +1,1 @@
+g++ -std=c++17 -shared -static -fopenmp -w -O2 -DDLL -o lib/methods/bispectral_cpp/bispectral.dll lib/methods/bispectral_cpp/bispectral.cpp -I"C:/Apps/msys64/ucrt64/include" -L"C:\Apps\msys64\ucrt64\lib" -lfftw3

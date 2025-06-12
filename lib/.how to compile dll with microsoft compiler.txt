@@ -1,0 +1,37 @@
+Command breakdown:
+(*) cl - compiler
+(*) /nologo - suppresses display of sign-on banner
+(*) /O2 - creates fast code
+(*) /GL - enables whole program optimization
+(*) /MD - compiles to create a multithreaded DLL, by using MSVCRT.lib
+(*) /LD - creates a dynamic-link library
+(*) /Gd - uses the __cdecl calling convention. (x86 only)
+(*) /W3 - output warning level
+(*) /WX- - no treating warnings as errors.
+(*) /GS - checks buffer security
+(*) /std:c++17 - language standart
+(*) /Wall - enable all warnings
+(*) /diagnostics:column - defines how warnings and errors are displayed
+(*) /EHsc
+(*) /openmp - use OpenMP
+(*) -DCPP_DLLEXPORT - creates define CPP_DLLEXPORT (is used in .h file)
+(*) "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include"
+(*) "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\ATLMFC\include"
+(*) "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\include"
+(*) "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\ucrt"
+(*) "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\um"
+(*) "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\shared"
+(*) "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\winrt"
+(*) "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\cppwinrt"
+(*) "-IC:\Documents\University\ScientificWork\_Prog_\lib\3rd_party_libs\fftw"
+(*) otf_cpp.cpp - source code
+(*) /link - linker options
+(*) /DLL - tell linker to create DLL
+(*) /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x64"
+(*) /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\ucrt\x64"
+(*) /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\lib\x64"
+(*) /LIBPATH:"C:\Documents\University\ScientificWork\_Prog_\lib\3rd_party_libs\fftw"
+(*) ../../3rd_party_libs/fftw/libfftw3-3.lib
+
+Full Command:
+cl /nologo /O2 /GL /MD /LD /Gd /W3 /WX- /GS /std:c++17 /Wall /diagnostics:column /EHsc /openmp -DCPP_DLLEXPORT "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include" "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\ATLMFC\include" "-IC:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\include" "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\ucrt" "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\um" "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\shared" "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\winrt" "-IC:\Program Files (x86)\Windows Kits\10\include\10.0.20348.0\cppwinrt" "-IC:\Documents\University\ScientificWork\_Prog_\lib\3rd_party_libs\fftw" otf_cpp.cpp /link /DLL /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\ucrt\x64" /LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\lib\x64" ../../3rd_party_libs/fftw/libfftw3-3.lib

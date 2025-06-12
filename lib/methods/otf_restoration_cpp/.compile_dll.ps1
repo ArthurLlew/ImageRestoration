@@ -1,0 +1,1 @@
+g++ -std=c++17 -shared -static -fopenmp -w -O2 -DDLL -o lib/methods/otf_restoration_cpp/otf_restoration.dll lib/methods/otf_restoration_cpp/otf_restoration.cpp lib/utils/otf_cpp/otf.dll -I"C:/Apps/msys64/ucrt64/include" -L"C:\Apps\msys64\ucrt64\lib" -lfftw3

@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "GCC",
+            // This tells IDE where to find .h files for C/C++ code
+            "includePath": [
+                "${workspaceFolder}/lib",
+                "C:/Apps/msys64/ucrt64/include"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "compilerPath": "C:/Apps/msys64/ucrt64/bin/g++.exe",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

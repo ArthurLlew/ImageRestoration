@@ -1,0 +1,1 @@
+nvcc -O2 --machine=64 --fmad=false --shared -DDLL -o lib/methods/tikhonov_rgb_cuda/tikhonov_rgb.dll lib/methods/tikhonov_rgb_cuda/tikhonov_rgb.cu -lcufft

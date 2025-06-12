@@ -1,0 +1,1 @@
+g++ -std=c++17 -shared -static -fopenmp -w -O2 -DDLL -o lib/utils/otf_cpp/otf.dll lib/utils/otf_cpp/otf.cpp -I"C:/Apps/msys64/ucrt64/include" -L"C:\Apps\msys64\ucrt64\lib" -lfftw3 -lgsl

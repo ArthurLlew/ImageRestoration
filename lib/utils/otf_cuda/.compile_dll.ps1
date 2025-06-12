@@ -1,0 +1,1 @@
+nvcc -O2 --machine=64 --fmad=false --shared -DDLL -o lib/utils/otf_cuda/otf.dll lib/utils/otf_cuda/otf.cu -lcufft

@@ -1,0 +1,1 @@
+nvcc -O2 --machine=64 --fmad=false --shared -DDLL -o lib/methods/otf_restoration_cuda/otf_restoration.dll lib/methods/otf_restoration_cuda/otf_restoration.cu  -lcufft
