@@ -263,11 +263,12 @@ __global__ void kernel_discrepancy_square(cuDoubleComplex *temp_image_1_d, doubl
  * @param min_d_memsize min device memory size
  * @param max_d max device memory
  * @param max_d_memsize max device memory size
+ * @param snap_min_max whether to snap min and max of image to 0 and 1 respectively
  * @param threadsPerBlock min/man device memory
  * @param numBlocks min/man device memory
 */
 void normalize_image(double *image_d, size_t h, size_t w, size_t image_size, size_t rgb_image_size, double *min_max_d,
-                     void *min_d, size_t min_d_memsize, void *max_d, size_t max_d_memsize,
+                     void *min_d, size_t min_d_memsize, void *max_d, size_t max_d_memsize, bool snap_min_max,
                      dim3 threadsPerBlock, dim3 numBlocks)
 {
     // Min/max storage
@@ -276,17 +277,23 @@ void normalize_image(double *image_d, size_t h, size_t w, size_t image_size, siz
     // Subtract global min
     cub::DeviceReduce::Min(min_d, min_d_memsize, image_d, min_max_d, rgb_image_size);
     cudaMemcpy(&min_max, min_max_d, sizeof(double), cudaMemcpyDeviceToHost);
-    for (int ch = 0; ch < 3; ch++)
+    if (min_max < 0 || snap_min_max)
     {
-        kernel_mat_sub_by_val<<<numBlocks, threadsPerBlock>>>(image_d + ch*image_size, h, w, min_max);
+        for (int ch = 0; ch < 3; ch++)
+        {
+            kernel_mat_sub_by_val<<<numBlocks, threadsPerBlock>>>(image_d + ch*image_size, h, w, min_max);
+        }
     }
 
     // Divide by global max
     cub::DeviceReduce::Max(max_d, max_d_memsize, image_d, min_max_d, rgb_image_size);
     cudaMemcpy(&min_max, min_max_d, sizeof(double), cudaMemcpyDeviceToHost);
-    for (int ch = 0; ch < 3; ch++)
+    if (min_max > 1.0 || snap_min_max)
     {
-        kernel_mat_div_by_val<<<numBlocks, threadsPerBlock>>>(image_d + ch*image_size, h, w, min_max);
+        for (int ch = 0; ch < 3; ch++)
+        {
+            kernel_mat_div_by_val<<<numBlocks, threadsPerBlock>>>(image_d + ch*image_size, h, w, min_max);
+        }
     }
 }
 
@@ -442,7 +449,7 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 kernel_rearrange_image<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
                 // Normalize image
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
-                                max_d_memsize, threadsPerBlock, numBlocks);
+                                max_d_memsize, false, threadsPerBlock, numBlocks);
                 // Perform autocontrast
                 for (int ch = 0; ch < 3; ch++)
                 {
@@ -469,7 +476,7 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 }
                 // Normalize image
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
-                                max_d_memsize, threadsPerBlock, numBlocks);
+                                max_d_memsize, true, threadsPerBlock, numBlocks);
 
                 // Move image back
                 kernel_swap_images<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
@@ -487,7 +494,7 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 kernel_swap_images<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
                 // Normalize image
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
-                                max_d_memsize, threadsPerBlock, numBlocks);
+                                max_d_memsize, false, threadsPerBlock, numBlocks);
 
                 // Compute discrepancy square
                 kernel_discrepancy_square<<<numBlocks, threadsPerBlock>>>(image_blurred_d, temp_image_2_d, h, w, image_size);

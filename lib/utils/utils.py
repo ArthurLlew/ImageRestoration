@@ -153,9 +153,13 @@ def image_load(path: str, cropping=None, mode='grayscale') -> np.ndarray:
     if mode=='grayscale':
         if len(image.shape) > 2:
             image = rgb2grayscale(image)
-        
-    # Return cropped normalized image
-    return image_normalize(image_crop(image, cropping=cropping))
+    
+    # Normalize
+    if image.max() > 1:
+        image = image / 255
+
+    # Return cropped image
+    return image_crop(image, cropping=cropping)
 
 
 def image_save(image: np.ndarray, path: str, mode='grayscale') -> np.ndarray:
@@ -174,13 +178,20 @@ def image_save(image: np.ndarray, path: str, mode='grayscale') -> np.ndarray:
 #===========================
 
 
-def image_normalize(image: np.ndarray) -> np.ndarray:
+def image_normalize(image: np.ndarray, snap_min_max=False) -> np.ndarray:
     """Normalizes image to [0, 1].
     """
-    
+
+    image_ = np.copy(image)
+
     # Snap min to zero
-    image_ = image - image.min()
-    return image_ / image_.max()
+    if (image.min() < 0 or snap_min_max):
+        image_ = image_ - image_.min()
+    # Divide by new max
+    if (image_.max() > 1 or snap_min_max):
+        image_ = image_ / image_.max()
+
+    return image_
 
 
 def image_crop_corners(image: np.ndarray, ratio=0.04) -> np.ndarray:
@@ -258,7 +269,7 @@ def rgb2grayscale(image: np.ndarray) -> np.ndarray:
     """Grayscales image.
     """
 
-    return np.dot(image, [0.299, 0.587, 0.144])
+    return image_normalize(np.dot(image, [0.299, 0.587, 0.144]))
 
 
 def image_autocontrast(image: np.ndarray, threshold=0.005) -> np.ndarray:
@@ -278,13 +289,13 @@ def image_autocontrast(image: np.ndarray, threshold=0.005) -> np.ndarray:
 
         # New image minimum from histogram
         i = 0
-        while (histogram[i] < threshold_px):
+        while (histogram[i] < threshold_px) and (i < 255):
             i += 1
         new_min = bin_edges[i]
 
         # New image maximum from histogram
         i = 255
-        while (histogram[i] < threshold_px):
+        while (histogram[i] < threshold_px) and (i > 1):
             i -= 1
         new_max = bin_edges[i]
 
@@ -302,8 +313,8 @@ def image_autocontrast(image: np.ndarray, threshold=0.005) -> np.ndarray:
         for ch in range(3):
             image[:,:,ch] = clamp_by_histogram(image[:,:,ch])
 
-    # Normalize image
-    image = image_normalize(image)
+    # Normalize image with values snapping
+    image = image_normalize(image, snap_min_max=True)
 
     return image
 
