@@ -459,18 +459,18 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                     cudaMemcpy(histogram, histogram_d, histogram_memsize, cudaMemcpyDeviceToHost);
                     // New image channel minimum from histogram
                     int j = 0;
-                    while (j < 256 && histogram[j] < threshold_px)
+                    while (j < 255 && histogram[j] < threshold_px)
                     {
                         j++;
                     }
-                    double new_min = j/256.0;
+                    double new_min = j/255.0;
                     // New image channel maximum from histogram
                     j = 255;
-                    while (j > 0 && histogram[j] < threshold_px)
+                    while (j > 1 && histogram[j] < threshold_px)
                     {
                         j--;
                     }
-                    double new_max = j/256.0;
+                    double new_max = j/255.0;
                     // Clamp image channel
                     kernel_clamp_image<<<numBlocks, threadsPerBlock>>>(temp_image_2_d + ch*image_size, new_min, new_max, h, w);
                 }
