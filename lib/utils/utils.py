@@ -3,6 +3,8 @@
 ###########
 
 
+# File operations
+import os
 # Math
 import math
 # Handy arrays
@@ -165,6 +167,11 @@ def image_load(path: str, cropping=None, mode='grayscale') -> np.ndarray:
 def image_save(image: np.ndarray, path: str, mode='grayscale') -> np.ndarray:
     """Saves image.
     """
+
+    # Make sure directory exists
+    dir = path.rsplit('/', 1)[0].rsplit('\\', 1)[0]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     
     if mode=='grayscale':
         MPLI.imsave(path, image, cmap='gray')
