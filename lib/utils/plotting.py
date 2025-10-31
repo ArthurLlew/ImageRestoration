@@ -271,4 +271,4 @@ def plot_functions(functions: list[FuncDesc], title='', x_axis_name='', y_axis_n
     
     # Save plot as vector image
     if plot_file != '':
-        fig.savefig(plot_file, format='svg')
+        fig.savefig(plot_file, format=plot_file.split('.')[-1])
