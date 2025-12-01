@@ -169,9 +169,11 @@ def image_save(image: np.ndarray, path: str, mode='grayscale') -> np.ndarray:
     """
 
     # Make sure directory exists
-    dir = path.rsplit('/', 1)[0].rsplit('\\', 1)[0]
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    path_split = path.rsplit('/', 1)
+    if len(path_split) > 1:
+        dir = path_split[0]
+        if not os.path.exists(dir):
+            os.makedirs(dir)
     
     if mode=='grayscale':
         MPLI.imsave(path, image, cmap='gray')
