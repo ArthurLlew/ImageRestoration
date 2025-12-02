@@ -176,9 +176,8 @@ __global__ void kernel_method_step(cuDoubleComplex *image_rest_d, const cuDouble
 }
 
 
-// --KERNEL--: rearranges image in different storage
-__global__ void kernel_rearrange_image(const cuDoubleComplex *temp_image_1_d, double *temp_image_2_d, size_t h, size_t w,
-                                       size_t image_size)
+// --KERNEL--: convert image data type (to double)
+__global__ void kernel_complex2image(const cuDoubleComplex *image_d, double *dest_d, size_t h, size_t w, size_t image_size)
 {
     // i and j are obtained via blocks and threads
     size_t i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -190,18 +189,17 @@ __global__ void kernel_rearrange_image(const cuDoubleComplex *temp_image_1_d, do
         size_t pixel_index = i*w + j; // pixel index
         size_t rgb_pixel_index = pixel_index*3; // each RGB pixel holds 3 values
 
-        // Rearrange RGB pixels
+        // Copy RGB pixels
         for (int channel = 0; channel < 3; channel++)
         {
-            temp_image_2_d[channel * image_size + pixel_index] = temp_image_1_d[rgb_pixel_index + channel].x;
+            dest_d[channel * image_size + pixel_index] = image_d[rgb_pixel_index + channel].x;
         }
     }
 }
 
 
-// --KERNEL--: swaps images
-__global__ void kernel_swap_images(cuDoubleComplex *temp_image_1_d, double *temp_image_2_d, size_t h, size_t w,
-                                   size_t image_size)
+// --KERNEL--: convert image data type (to complex)
+__global__ void kernel_image2complex(double *image_d, cuDoubleComplex *dest_d, size_t h, size_t w, size_t image_size)
 {
     // i and j are obtained via blocks and threads
     size_t i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -213,12 +211,10 @@ __global__ void kernel_swap_images(cuDoubleComplex *temp_image_1_d, double *temp
         size_t pixel_index = i*w + j; // pixel index
         size_t rgb_pixel_index = pixel_index*3; // each RGB pixel holds 3 values
 
-        // Swap RGB pixels
+        // Copy RGB pixels
         for (int channel = 0; channel < 3; channel++)
         {
-            double value = temp_image_2_d[channel * image_size + pixel_index];
-            temp_image_2_d[channel * image_size + pixel_index] = temp_image_1_d[rgb_pixel_index + channel].x;
-            temp_image_1_d[rgb_pixel_index + channel] = make_cuDoubleComplex(value, 0);
+            dest_d[rgb_pixel_index + channel] = make_cuDoubleComplex(image_d[channel * image_size + pixel_index], 0);
         }
     }
 }
@@ -430,7 +426,7 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
             // Determine and allocate integral value temporary device storage
             void *integral_d_temp = nullptr;
             size_t integral_d_temp_memsize = 0;
-            cub::DeviceReduce::Sum(integral_d_temp, integral_d_temp_memsize, temp_image_2_d, integral_d, image_size);
+            cub::DeviceReduce::Sum(integral_d_temp, integral_d_temp_memsize, temp_image_2_d, integral_d, rgb_image_size);
             cudaMalloc(&integral_d_temp, integral_d_temp_memsize);
 
             // Method iterations
@@ -445,8 +441,8 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 // Perform IFFT
                 cufftExecZ2Z(fftPlan, temp_image_1_d, temp_image_1_d, CUFFT_INVERSE);
                 cudaDeviceSynchronize();
-                // Rearrange image
-                kernel_rearrange_image<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
+                // Copy image real part
+                kernel_complex2image<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
                 // Normalize image
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
                                 max_d_memsize, false, threadsPerBlock, numBlocks);
@@ -478,8 +474,8 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
                                 max_d_memsize, true, threadsPerBlock, numBlocks);
 
-                // Move image back
-                kernel_swap_images<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
+                // Convert autocontrasted image back to complex
+                kernel_image2complex<<<numBlocks, threadsPerBlock>>>(temp_image_2_d, temp_image_1_d, h, w, image_size);
                 // Perform FFT
                 cufftExecZ2Z(fftPlan, temp_image_1_d, temp_image_1_d, CUFFT_FORWARD);
                 cudaDeviceSynchronize();
@@ -490,25 +486,23 @@ void tikhonov_regularization_method_rgb(std::complex<double> *image, size_t h, s
                 cufftExecZ2Z(fftPlan, temp_image_1_d, temp_image_1_d, CUFFT_INVERSE);
                 cudaDeviceSynchronize();
 
-                // Swap images
-                kernel_swap_images<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
+                // Copy image real part
+                kernel_complex2image<<<numBlocks, threadsPerBlock>>>(temp_image_1_d, temp_image_2_d, h, w, image_size);
                 // Normalize image
                 normalize_image(temp_image_2_d, h, w, image_size, rgb_image_size, min_max_d, min_d, min_d_memsize, max_d,
                                 max_d_memsize, false, threadsPerBlock, numBlocks);
 
                 // Compute discrepancy square
                 kernel_discrepancy_square<<<numBlocks, threadsPerBlock>>>(image_blurred_d, temp_image_2_d, h, w, image_size);
-                // Integrate each channel separately
+                // Integrate: multiply by integration step and sum
                 for (int ch = 0; ch < 3; ch++)
                 {
-                    // Integrate
                     kernel_mat_mul_by_val<<<numBlocks, threadsPerBlock>>>(temp_image_2_d + ch*image_size, h, w, h_ij);
-                    cub::DeviceReduce::Sum(integral_d_temp, integral_d_temp_memsize, temp_image_2_d + ch*image_size,
-                                           integral_d, image_size);
-                    // Sqrt of integral value
-                    cudaMemcpy(&integral, integral_d, sizeof(double), cudaMemcpyDeviceToHost);
-                    discrepancy[i] += sqrt(integral);
                 }
+                cub::DeviceReduce::Sum(integral_d_temp, integral_d_temp_memsize, temp_image_2_d, integral_d, rgb_image_size);
+                // Sqrt of integral value
+                cudaMemcpy(&integral, integral_d, sizeof(double), cudaMemcpyDeviceToHost);
+                discrepancy[i] += sqrt(integral);
 
                 // Update iteration number
                 i++;
